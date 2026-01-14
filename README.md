@@ -9,18 +9,20 @@ This is the robust Server-side API that powers the MERN Blog Application. Built 
 
 ## 🛠️ Tech Stack
 * **Core:** Node.js, Express.js, MongoDB Atlas
-* **Security:** JWT (jsonwebtoken), Bcrypt.js, CORS
+* **Security:** JWT (jsonwebtoken), Bcrypt.js, CORS, **Google reCAPTCHA v2**
 * **Media:** Cloudinary (for image handling logic)
-* **Utilities:** Mongoose (ODM), Nodemailer, Multer
+* **Utilities:** Mongoose (ODM), Nodemailer, Multer, Axios
 
 ## 🚀 Key Features
 * **RESTful API:** Clean and structured endpoints for Blogs, Categories, and Comments.
 * **OTP System:** Automated email verification for user registration and password recovery.
+* **Bot Protection:** Integrated server-side **Google reCAPTCHA** verification for login and signup-otp routes.
 * **Security:** Protected routes using JWT-based authentication middleware.
 * **Data Validation:** Schema-based validation using Mongoose to ensure data integrity.
 * **Image Management:** Server-side logic to handle image uploads directly to Cloudinary.
 
 ## 🔐 Security Implementation
+* **reCAPTCHA Verification:** Uses `axios` to verify frontend tokens with Google's API, preventing automated bot submissions.
 * **JWT Authentication:** Implemented custom middleware to verify tokens on protected routes (like creating/deleting blogs).
 * **Password Security:** Uses `bcryptjs` for salt-hashing passwords, ensuring user data is never stored in plain text.
 * **OTP Flow:** Integrated `nodemailer` to generate and send time-sensitive 6-digit codes for secure account verification.
@@ -44,10 +46,14 @@ This is the robust Server-side API that powers the MERN Blog Application. Built 
 
    ```env
    PORT=3000
-   MONGODB_URI=your_mongodb_connection_string
+   MONGODB_URL=your_mongodb_connection_string
    JWT_SECRET=your_random_secret_key
    EMAIL_USER=your_gmail_address
    EMAIL_PASS=your_gmail_app_password
+   RECAPTCHA_SECRET_KEY=your_google_recaptcha_secret_key
+   CLOUDINARY_CLOUD_NAME=your_cloud_name
+   CLOUDINARY_API_KEY=your_api_key
+   CLOUDINARY_API_SECRET=your_api_secret
    ```
 
 4. **Start the server:**

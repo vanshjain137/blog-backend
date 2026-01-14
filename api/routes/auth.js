@@ -6,6 +6,7 @@ const User = require('../model/auth');
 const mongoose = require('mongoose');
 const jwt = require('jsonwebtoken');
 const nodemailer = require('nodemailer');
+const axios = require('axios');
 
 let otpStore = {};
 
@@ -62,14 +63,26 @@ router.post('/user/reset-password', (req, res) => {
 
 
 //Route to send OTP for Signup
-router.post('/user/signup-otp', (req, res) => {
-    const { email } = req.body;
-    
+router.post('/user/signup-otp', async (req, res) => {
+    const { email, recaptchaValue } = req.body;
+
+    try {
+        const response = await axios.post(
+            `https://www.google.com/recaptcha/api/siteverify?secret=${process.env.RECAPTCHA_SECRET_KEY}&response=${recaptchaValue}`
+        );
+
+        if (!response.data.success) {
+            return res.status(400).json({ msg: "Captcha verification failed" });
+        }
+    } catch (error) {
+        return res.status(500).json({ msg: "Error verifying captcha" });
+    }
+
     User.findOne({ email: email }).then(user => {
         if (user) return res.status(400).json({ msg: "Email already registered" });
 
         const otp = Math.floor(100000 + Math.random() * 900000).toString();
-        otpStore[email] = otp; 
+        otpStore[email] = otp;
 
         const mailOptions = {
             from: process.env.EMAIL_USER,
@@ -87,108 +100,115 @@ router.post('/user/signup-otp', (req, res) => {
 
 
 //user signup
-router.post('/user/signup',(req,res)=>{
+router.post('/user/signup', (req, res) => {
     const { fullName, email, password, otp } = req.body;
 
     if (otpStore[email] !== otp) {
         return res.status(400).json({ msg: "Invalid or expired OTP" });
     }
-    bcrypt.hash(req.body.password,10,(err,hash)=>{
-        if(err)
-        {
+    bcrypt.hash(req.body.password, 10, (err, hash) => {
+        if (err) {
             return res.status(500).json({
-                error:err
+                error: err
             })
         }
-        else
-        {
+        else {
             const user = new User({
-                _id:new mongoose.Types.ObjectId,
-                fullName:req.body.fullName,
-                email:req.body.email,
-                password:hash
+                _id: new mongoose.Types.ObjectId,
+                fullName: req.body.fullName,
+                email: req.body.email,
+                password: hash
             })
             user.save()
-            .then(result=>{
-                delete otpStore[email]; // Clear OTP
-                res.status(200).json({
-                    newUser:result
+                .then(result => {
+                    delete otpStore[email]; // Clear OTP
+                    res.status(200).json({
+                        newUser: result
+                    })
                 })
-            })
-            .catch(error=>{
-                console.log(error)
-                res.status(500).json({
-                    error:error
+                .catch(error => {
+                    console.log(error)
+                    res.status(500).json({
+                        error: error
+                    })
                 })
-            })
         }
     })
 })
 
 //user login
-router.post('/user/login',(req,res)=>{
-    User.find({email:req.body.email})
-    .then(user=>{
-        console.log(user)
-        if(user.length<1)
-        {
-            return res.status(404).json({
-                message:'user not found'
-            })
-        }
-        bcrypt.compare(req.body.password,user[0].password,(err,result)=>{
-            if(!result)
-            {
-                return res.status(401).json({
-                    msg:'password matching failed'
+router.post('/user/login', async (req, res) => {
+    console.log("Incoming Data:", req.body);
+    const { email, password, recaptchaValue } = req.body;
+
+    const response = await axios.post(
+        `https://www.google.com/recaptcha/api/siteverify?secret=${process.env.RECAPTCHA_SECRET_KEY}&response=${recaptchaValue}`
+    );
+
+    if (!response.data.success) {
+        return res.status(400).json({ msg: "Captcha verification failed" });
+    }
+
+
+    User.find({ email: req.body.email })
+        .then(user => {
+            console.log(user)
+            if (user.length < 1) {
+                return res.status(404).json({
+                    message: 'user not found'
                 })
             }
-            const token = jwt.sign({
-                email:user[0].email,
-                fullName:user[0].fullName,
-                userType:'user'
-            },
-            process.env.JWT_SECRET,
-            {
-                expiresIn:'7d'
-            })
-            res.status(200).json({
-                email:user[0].email,
-                fullName:user[0].fullName,
-                token:token
+            bcrypt.compare(req.body.password, user[0].password, (err, result) => {
+                if (!result) {
+                    return res.status(401).json({
+                        msg: 'password matching failed'
+                    })
+                }
+                const token = jwt.sign({
+                    email: user[0].email,
+                    fullName: user[0].fullName,
+                    userType: 'user'
+                },
+                    process.env.JWT_SECRET,
+                    {
+                        expiresIn: '7d'
+                    })
+                res.status(200).json({
+                    email: user[0].email,
+                    fullName: user[0].fullName,
+                    token: token
+                })
             })
         })
-    })
-    .catch(err=>{
-        console.log(err)
-        res.status(500).json({
-            error:err
+        .catch(err => {
+            console.log(err)
+            res.status(500).json({
+                error: err
+            })
         })
-    })
 })
 
 
 //admin login
-router.post('/admin/login',(req,res)=>{
-    if(req.body.userName === process.env.ADMIN_USERNAME && req.body.password === process.env.ADMIN_PASSWORD)
-    {
+router.post('/admin/login', (req, res) => {
+    if (req.body.userName === process.env.ADMIN_USERNAME && req.body.password === process.env.ADMIN_PASSWORD) {
         const token = jwt.sign({
-                email:'vanshjain@gmail.com',
-                fullName:'vansh jain',
-                userType:'admin'
-            },
+            email: 'vanshjain@gmail.com',
+            fullName: 'vansh jain',
+            userType: 'admin'
+        },
             process.env.JWT_SECRET,
             {
-                expiresIn:'7d'
+                expiresIn: '7d'
             })
-            return res.status(200).json({
-                fullName:'vansh jain',
-                email:'vanshjain@gmail.com',
-                token:token
-            })
+        return res.status(200).json({
+            fullName: 'vansh jain',
+            email: 'vanshjain@gmail.com',
+            token: token
+        })
     }
     res.status(404).json({
-        msg:'Invalid Admin Credentials'
+        msg: 'Invalid Admin Credentials'
     })
 })
 
