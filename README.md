@@ -4,7 +4,7 @@ This is the robust Server-side API that powers the MERN Blog Application. Built 
 
 ## 🔗 Project Links
 * **Frontend Repository:** [https://github.com/vanshjain137/blog-frontend](https://github.com/vanshjain137/blog-frontend)
-* **Live API Base URL:** [https://vansh-blog-backend.onrender.com](https://vansh-blog-backend.onrender.com)
+* **Live API Base URL:** [https://vansh-blog-api.onrender.com](https://vansh-blog-api.onrender.com)
 * **Full Stack Architecture:** This repository contains the Backend logic. The React.js frontend is managed in a separate repository to maintain a clean MVC-style separation.
 
 ## 🛠️ Tech Stack
