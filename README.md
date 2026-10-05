@@ -76,4 +76,9 @@ Hosted on Render (Free Tier). Please note that the server may experience a "cold
 
 ---
 
-Developed by **Vansh Jain** [LinkedIn](www.linkedin.com/in/vansh-jain-b955a23a1)
+## 👤 Author
+
+**Vansh Jain**
+- **LinkedIn:** [linkedin.com/in/vanshjain137](https://www.linkedin.com/in/vanshjain137)
+- **GitHub:** [@vanshjain137](https://github.com/vanshjain137)
+- **Portfolio:** [https://vansh-os-three.vercel.app/](https://vansh-os-three.vercel.app/)
